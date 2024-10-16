@@ -24,20 +24,20 @@ A simple Java application that allows users to convert amounts between different
    ```bash
    mvn exec:java -Dexec.mainClass="com.CurrencyConverterUI"
 
-**Usage**
+## Usage
 Enter the currency you want to convert from and to in the provided text fields.
 Input the amount you wish to convert.
 Click the "Convert" button to see the result.
 
-**API Used**
+## API Used
 Frankfurter API: Provides currency exchange rates and conversion functionalities.
 
-**Contributing**
+## Contributing
 Contributions are welcome! Please feel free to submit a pull request or open an issue for any suggestions or improvements.
 
-**License**
+## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-**Acknowledgements**
+## Acknowledgements
 Thanks to the developers of the Frankfurter API for providing a simple and reliable service for currency conversion.
 
