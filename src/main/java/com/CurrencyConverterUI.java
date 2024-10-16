@@ -4,6 +4,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import javax.swing.*;
 import org.json.JSONObject;
@@ -24,10 +26,10 @@ public class CurrencyConverterUI {
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
+
         // Set font and background color for the panel
         panel.setBackground(Color.LIGHT_GRAY);
-        
+
         // Create a title label
         JLabel titleLabel = new JLabel("Currency Converter");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
@@ -37,7 +39,7 @@ public class CurrencyConverterUI {
         gbc.gridwidth = 2;
         gbc.insets = new Insets(10, 10, 10, 10); // Padding
         panel.add(titleLabel, gbc);
-        
+
         // Label and Dropdowns for currency selection
         JLabel fromCurrencyLabel = new JLabel("Convert From:");
         fromCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -45,33 +47,33 @@ public class CurrencyConverterUI {
         gbc.gridx = 0;
         gbc.gridy = 1;
         panel.add(fromCurrencyLabel, gbc);
-        
+
         fromCurrencyDropdown = new JComboBox<>();
         gbc.gridx = 1;
         panel.add(fromCurrencyDropdown, gbc);
-        
+
         JLabel toCurrencyLabel = new JLabel("Convert To:");
         toCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridx = 0;
         gbc.gridy = 2;
         panel.add(toCurrencyLabel, gbc);
-        
+
         toCurrencyDropdown = new JComboBox<>();
         gbc.gridx = 1;
         panel.add(toCurrencyDropdown, gbc);
-        
+
         // Amount input
         JLabel amountLabel = new JLabel("Amount:");
         amountLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridx = 0;
         gbc.gridy = 3;
         panel.add(amountLabel, gbc);
-        
+
         JTextField amountField = new JTextField(10);
         amountField.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridx = 1;
         panel.add(amountField, gbc);
-        
+
         // Convert button
         JButton convertButton = new JButton("Convert");
         convertButton.setFont(new Font("Arial", Font.BOLD, 16));
@@ -82,7 +84,7 @@ public class CurrencyConverterUI {
         gbc.gridwidth = 2;
         gbc.insets = new Insets(20, 10, 10, 10); // Padding
         panel.add(convertButton, gbc);
-        
+
         JLabel resultLabel = new JLabel();
         resultLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridy = 5;
@@ -127,12 +129,21 @@ public class CurrencyConverterUI {
                 String responseBody = response.body().string();
                 JSONObject jsonObject = new JSONObject(responseBody);
 
-                // Iterate through the JSON object and add each currency code to the dropdown
+                // Store currency codes in a List
+                ArrayList<String> currencyCodes = new ArrayList<>();
                 Iterator<String> keys = jsonObject.keys();
                 while (keys.hasNext()) {
                     String currencyCode = keys.next();
-                    fromCurrencyDropdown.addItem(currencyCode);
-                    toCurrencyDropdown.addItem(currencyCode);
+                    currencyCodes.add(currencyCode);
+                }
+
+                // Sort the currency codes alphabetically
+                Collections.sort(currencyCodes);
+
+                // Populate the dropdowns with sorted currency codes
+                for (String code : currencyCodes) {
+                    fromCurrencyDropdown.addItem(code);
+                    toCurrencyDropdown.addItem(code);
                 }
             } else {
                 JOptionPane.showMessageDialog(null, "Error fetching currencies: " + response.message());
