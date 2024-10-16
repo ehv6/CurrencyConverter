@@ -21,38 +21,76 @@ public class CurrencyConverterUI {
         // Create the frame and panel
         JFrame frame = new JFrame("Currency Converter");
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(4, 2));
-
+        panel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // Set font and background color for the panel
+        panel.setBackground(Color.LIGHT_GRAY);
+        
+        // Create a title label
+        JLabel titleLabel = new JLabel("Currency Converter");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(Color.BLUE);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(10, 10, 10, 10); // Padding
+        panel.add(titleLabel, gbc);
+        
         // Label and Dropdowns for currency selection
         JLabel fromCurrencyLabel = new JLabel("Convert From:");
+        fromCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridwidth = 1; // Reset to default
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(fromCurrencyLabel, gbc);
+        
         fromCurrencyDropdown = new JComboBox<>();
+        gbc.gridx = 1;
+        panel.add(fromCurrencyDropdown, gbc);
+        
         JLabel toCurrencyLabel = new JLabel("Convert To:");
+        toCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(toCurrencyLabel, gbc);
+        
         toCurrencyDropdown = new JComboBox<>();
-
-        // Fetch and populate the dropdown with currency codes from API
-        populateCurrencyDropdowns();
-
+        gbc.gridx = 1;
+        panel.add(toCurrencyDropdown, gbc);
+        
         // Amount input
         JLabel amountLabel = new JLabel("Amount:");
-        JTextField amountField = new JTextField();
-
+        amountLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(amountLabel, gbc);
+        
+        JTextField amountField = new JTextField(10);
+        amountField.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridx = 1;
+        panel.add(amountField, gbc);
+        
         // Convert button
         JButton convertButton = new JButton("Convert");
+        convertButton.setFont(new Font("Arial", Font.BOLD, 16));
+        convertButton.setBackground(Color.BLUE);
+        convertButton.setForeground(Color.BLACK);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(20, 10, 10, 10); // Padding
+        panel.add(convertButton, gbc);
+        
         JLabel resultLabel = new JLabel();
-
-        // Add components to the panel
-        panel.add(fromCurrencyLabel);
-        panel.add(fromCurrencyDropdown);
-        panel.add(toCurrencyLabel);
-        panel.add(toCurrencyDropdown);
-        panel.add(amountLabel);
-        panel.add(amountField);
-        panel.add(convertButton);
-        panel.add(resultLabel);
+        resultLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridy = 5;
+        panel.add(resultLabel, gbc);
 
         // Add panel to the frame
         frame.add(panel);
-        frame.setSize(400, 200);
+        frame.setSize(400, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
@@ -63,11 +101,15 @@ public class CurrencyConverterUI {
                 String toCurrency = (String) toCurrencyDropdown.getSelectedItem();
                 BigDecimal amount = new BigDecimal(amountField.getText());
                 BigDecimal convertedAmount = convertCurrency(fromCurrency, toCurrency, amount);
-                resultLabel.setText(amount + " " + fromCurrency + " = " + convertedAmount + " " + toCurrency);
+                resultLabel.setText(String.format("<html><b>Result:</b> %s %s = %s %s</html>",
+                        amount, fromCurrency, convertedAmount, toCurrency));
             } catch (Exception ex) {
                 resultLabel.setText("Error: " + ex.getMessage());
             }
         });
+
+        // Fetch and populate the dropdown with currency codes from API
+        populateCurrencyDropdowns();
     }
 
     // Method to populate the dropdowns with currency codes
