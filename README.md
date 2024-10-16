@@ -18,9 +18,11 @@ A simple Java application that allows users to convert amounts between different
    git clone <repository-url>
    cd CurrencyConverter
 2. Build the project: If you're using Maven, you can build the project by running:
-   '''mvn clean install
+   ```bash
+   mvn clean install
 3. Run the application: You can run the application using:
-'''mvn exec:java -Dexec.mainClass="com.CurrencyConverterUI"
+   ```bash
+   mvn exec:java -Dexec.mainClass="com.CurrencyConverterUI"
 
 **Usage**
 Enter the currency you want to convert from and to in the provided text fields.
