@@ -1,9 +1,13 @@
 package com;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -22,6 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 import org.json.JSONObject;
 
@@ -83,7 +89,18 @@ public class CurrencyConverterUI {
     }
 
     private static void addTitle() {
-        JLabel titleLabel = new JLabel("Currency Converter");
+        JLabel titleLabel = new JLabel("Currency Converter") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.GRAY);
+                g2.drawString(getText(), 2, 22);
+                g2.setColor(Color.BLACK);
+                g2.drawString(getText(), 0, 20);
+                g2.dispose();
+            }
+        };
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(titleLabel);
@@ -154,7 +171,31 @@ public class CurrencyConverterUI {
     }
 
     private static void addConvertButton() {
-        convertButton = new JButton("Convert");
+        convertButton = new JButton("Convert") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                super.paintComponent(g2);
+                g2.dispose();
+            }
+
+            @Override
+            protected void paintBorder(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground().darker());
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                g2.dispose();
+            }
+        };
+        convertButton.setUI(new BasicButtonUI());
+        convertButton.setBackground(new Color(0, 120, 215));
+        convertButton.setForeground(Color.WHITE);
+        convertButton.setFocusPainted(false);
+        convertButton.setBorder(new EmptyBorder(10, 25, 10, 25));
         convertButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         convertButton.addActionListener(e -> performConversion());
         mainPanel.add(convertButton);
