@@ -84,7 +84,7 @@ public class CurrencyConverterUI {
 
     private static void addTitle() {
         JLabel titleLabel = new JLabel("Currency Converter");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(titleLabel);
         mainPanel.add(Box.createVerticalStrut(20));
