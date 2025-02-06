@@ -1,8 +1,6 @@
 package com;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.json.JSONObject;
 
@@ -12,99 +10,101 @@ import okhttp3.Response;
 
 public class CurrencyService {
     private final OkHttpClient client = new OkHttpClient();
-    private static final Map<String, String> CRYPTO_APIS = new HashMap<>() {{
-        put("COINgecko", "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=%s");
-        put("BINANCE", "https://api.binance.com/api/v3/ticker/price?symbol=%s%s");
-    }};
+    private static final String COINGECKO_SIMPLE_PRICE = "https://api.coingecko.com/api/v3/simple/price";
+    private static final String FRANKFURTER_BASE = "https://api.frankfurter.app";
 
     public CurrencyRate getCurrencyRate(String convertFrom, String convertTo) {
-        // For traditional currencies, use existing Frankfurter app method
         if (isFiatCurrency(convertFrom) && isFiatCurrency(convertTo)) {
-            String urlString = "https://api.frankfurter.app/latest?base=" + convertFrom + "&symbols=" + convertTo;
-            Request request = new Request.Builder()
-                    .url(urlString)
-                    .get()
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    String stringResponse = response.body().string();
-                    JSONObject jsonObject = new JSONObject(stringResponse);
-
-                    if (jsonObject.has("rates")) {
-                        BigDecimal rate = jsonObject.getJSONObject("rates").getBigDecimal(convertTo);
-                        return new CurrencyRate(convertTo, rate);
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Fiat currency error: " + e.getMessage());
-            }
+            return getFiatCurrencyRate(convertFrom, convertTo);
+        } else if (isCryptoCurrency(convertFrom) || isCryptoCurrency(convertTo)) {
+            return getCryptoRate(convertFrom, convertTo);
         }
-        
-        // For cryptocurrency conversions
-        if (isCryptoCurrency(convertFrom) || isCryptoCurrency(convertTo)) {
-            return fetchCryptoCurrencyRate(convertFrom, convertTo);
-        }
-        
         return null;
     }
 
-    private CurrencyRate fetchCryptoCurrencyRate(String convertFrom, String convertTo) {
+    private CurrencyRate getCryptoRate(String convertFrom, String convertTo) {
         try {
-            // CoinGecko API for crypto rates
-            String url = String.format(
-                CRYPTO_APIS.get("COINgecko"), 
-                convertFrom.toLowerCase(), 
-                convertTo.toLowerCase()
-            );
-            
+            // Map currency codes to CoinGecko IDs
+            String fromId = getCoinGeckoId(convertFrom.toLowerCase());
+            String toSymbol = convertTo.toLowerCase();
+
+            String url = String.format("%s?ids=%s&vs_currencies=%s", 
+                COINGECKO_SIMPLE_PRICE, fromId, toSymbol);
+
             Request request = new Request.Builder()
-                    .url(url)
-                    .get()
-                    .build();
+                .url(url)
+                .addHeader("Accept", "application/json")
+                .get()
+                .build();
 
-            try (Response response = client.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    String stringResponse = response.body().string();
-                    JSONObject jsonObject = new JSONObject(stringResponse);
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful()) return null;
 
-                    if (!jsonObject.isEmpty()) {
-                        BigDecimal rate = jsonObject
-                            .getJSONObject(convertFrom.toLowerCase())
-                            .getBigDecimal(convertTo.toLowerCase());
-                        
-                        return new CurrencyRate(convertTo, rate);
-                    }
+            JSONObject data = new JSONObject(response.body().string());
+            if (data.has(fromId)) {
+                JSONObject rates = data.getJSONObject(fromId);
+                if (rates.has(toSymbol)) {
+                    BigDecimal rate = BigDecimal.valueOf(rates.getDouble(toSymbol));
+                    return new CurrencyRate(convertTo, rate);
                 }
             }
         } catch (Exception e) {
-            System.out.println("Crypto currency error: " + e.getMessage());
+            logError("Crypto conversion error", e);
+        }
+        return null;
+    }
+
+    private String getCoinGeckoId(String symbol) {
+        // Map common symbols to CoinGecko IDs
+        switch (symbol) {
+            case "btc": return "bitcoin";
+            case "eth": return "ethereum";
+            case "bnb": return "binancecoin";
+            case "ada": return "cardano";
+            case "xrp": return "ripple";
+            case "usdt": return "tether";
+            default: return symbol;
+        }
+    }
+
+    private CurrencyRate getFiatCurrencyRate(String convertFrom, String convertTo) {
+        try {
+            String url = FRANKFURTER_BASE + "/latest?base=" + convertFrom + "&symbols=" + convertTo;
+            Request request = new Request.Builder().url(url).get().build();
+            Response response = client.newCall(request).execute();
+
+            if (response.isSuccessful()) {
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                if (jsonObject.has("rates")) {
+                    BigDecimal rate = jsonObject.getJSONObject("rates").getBigDecimal(convertTo);
+                    return new CurrencyRate(convertTo, rate);
+                }
+            }
+        } catch (Exception e) {
+            logError("Fiat conversion error", e);
         }
         return null;
     }
 
     public BigDecimal convertCurrency(String convertFrom, String convertTo, BigDecimal quantity) {
-        CurrencyRate currencyRate = getCurrencyRate(convertFrom, convertTo);
-        if (currencyRate != null) {
-            return currencyRate.convert(quantity);
+        CurrencyRate rate = getCurrencyRate(convertFrom, convertTo);
+        if (rate != null) {
+            return rate.convert(quantity);
         }
         return null;
     }
 
-    // Helper methods to identify currency types
     private boolean isFiatCurrency(String currency) {
-        // Basic validation for fiat currencies (typically 3 uppercase letters)
         return currency.matches("^[A-Z]{3}$") && !isCryptoCurrency(currency);
     }
 
     private boolean isCryptoCurrency(String currency) {
-        // Add known crypto identifiers
-        String[] cryptoPrefixes = {"BTC", "ETH", "XRP", "LTC", "BNB", "ADA"};
-        for (String prefix : cryptoPrefixes) {
-            if (currency.toUpperCase().startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
+        return currency.matches("^(BTC|ETH|BNB|XRP|ADA|USDT)$");
+    }
+
+    private void logError(String message, Exception e) {
+        System.err.println(message);
+        System.err.println("Error details: " + e.getMessage());
+        e.printStackTrace();
     }
 }
