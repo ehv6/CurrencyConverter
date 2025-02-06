@@ -1,177 +1,283 @@
 package com;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import javax.swing.*;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
 import org.json.JSONObject;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class CurrencyConverterUI {
-
-    private static OkHttpClient client = new OkHttpClient();
-    private static JComboBox<String> fromCurrencyDropdown;
-    private static JComboBox<String> toCurrencyDropdown;
+    private static final OkHttpClient client = new OkHttpClient();
+    private static final String[] CRYPTO_CURRENCIES = {"BTC", "ETH", "BNB", "ADA", "XRP", "USDT"};
+    
+    // UI Components
+    private static JFrame frame;
+    private static JPanel mainPanel;
+    private static JComboBox<String> fromFiatDropdown;
+    private static JComboBox<String> toFiatDropdown;
+    private static JComboBox<String> fromCryptoDropdown;
+    private static JComboBox<String> toCryptoDropdown;
+    private static JTextField amountField;
+    private static JLabel resultLabel;
+    private static JRadioButton fiatRadioButton;
+    private static JRadioButton cryptoRadioButton;
+    private static JButton convertButton;
 
     public static void main(String[] args) {
-        // Create the frame and panel
-        JFrame frame = new JFrame("Currency Converter");
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Set font and background color for the panel
-        panel.setBackground(Color.LIGHT_GRAY);
-
-        // Create a title label
-        JLabel titleLabel = new JLabel("Currency Converter");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(Color.BLUE);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(10, 10, 10, 10); // Padding
-        panel.add(titleLabel, gbc);
-
-        // Label and Dropdowns for currency selection
-        JLabel fromCurrencyLabel = new JLabel("Convert From:");
-        fromCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridwidth = 1; // Reset to default
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(fromCurrencyLabel, gbc);
-
-        fromCurrencyDropdown = new JComboBox<>();
-        gbc.gridx = 1;
-        panel.add(fromCurrencyDropdown, gbc);
-
-        JLabel toCurrencyLabel = new JLabel("Convert To:");
-        toCurrencyLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(toCurrencyLabel, gbc);
-
-        toCurrencyDropdown = new JComboBox<>();
-        gbc.gridx = 1;
-        panel.add(toCurrencyDropdown, gbc);
-
-        // Amount input
-        JLabel amountLabel = new JLabel("Amount:");
-        amountLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(amountLabel, gbc);
-
-        JTextField amountField = new JTextField(10);
-        amountField.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridx = 1;
-        panel.add(amountField, gbc);
-
-        // Convert button
-        JButton convertButton = new JButton("Convert");
-        convertButton.setFont(new Font("Arial", Font.BOLD, 16));
-        convertButton.setBackground(Color.BLUE);
-        convertButton.setForeground(Color.BLACK);
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 10, 10, 10); // Padding
-        panel.add(convertButton, gbc);
-
-        JLabel resultLabel = new JLabel();
-        resultLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridy = 5;
-        panel.add(resultLabel, gbc);
-
-        // Add panel to the frame
-        frame.add(panel);
-        frame.setSize(400, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
-
-        // Action for convert button
-        convertButton.addActionListener(e -> {
-            try {
-                String fromCurrency = (String) fromCurrencyDropdown.getSelectedItem();
-                String toCurrency = (String) toCurrencyDropdown.getSelectedItem();
-                BigDecimal amount = new BigDecimal(amountField.getText());
-                BigDecimal convertedAmount = convertCurrency(fromCurrency, toCurrency, amount);
-                resultLabel.setText(String.format("<html><b>Result:</b> %s %s = %s %s</html>",
-                        amount, fromCurrency, convertedAmount, toCurrency));
-            } catch (Exception ex) {
-                resultLabel.setText("Error: " + ex.getMessage());
-            }
-        });
-
-        // Fetch and populate the dropdown with currency codes from API
-        populateCurrencyDropdowns();
+        SwingUtilities.invokeLater(() -> createAndShowGUI());
     }
 
-    // Method to populate the dropdowns with currency codes
-    private static void populateCurrencyDropdowns() {
+    private static void createAndShowGUI() {
+        // Create main frame
+        frame = new JFrame("Currency Converter");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // Create main panel with margin
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Add components
+        addTitle();
+        addConversionTypeSelection();
+        addCurrencySelectionPanels();
+        addAmountPanel();
+        addConvertButton();
+        addResultLabel();
+
+        // Initialize dropdowns
+        populateFiatCurrencyDropdowns();
+        populateCryptoDropdowns();
+
+        // Set initial state
+        toggleCurrencyPanels(true);
+
+        // Finalize frame setup
+        frame.add(mainPanel);
+        frame.setSize(400, 600);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    private static void addTitle() {
+        JLabel titleLabel = new JLabel("Currency Converter");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(titleLabel);
+        mainPanel.add(Box.createVerticalStrut(20));
+    }
+
+    private static void addConversionTypeSelection() {
+        JPanel radioPanel = new JPanel();
+        radioPanel.setLayout(new FlowLayout());
+        
+        fiatRadioButton = new JRadioButton("Fiat Currency");
+        cryptoRadioButton = new JRadioButton("Cryptocurrency");
+        
+        ButtonGroup group = new ButtonGroup();
+        group.add(fiatRadioButton);
+        group.add(cryptoRadioButton);
+        
+        fiatRadioButton.setSelected(true);
+        fiatRadioButton.addActionListener(e -> toggleCurrencyPanels(true));
+        cryptoRadioButton.addActionListener(e -> toggleCurrencyPanels(false));
+        
+        radioPanel.add(fiatRadioButton);
+        radioPanel.add(cryptoRadioButton);
+        
+        mainPanel.add(radioPanel);
+        mainPanel.add(Box.createVerticalStrut(10));
+    }
+
+    private static void addCurrencySelectionPanels() {
+        // Fiat currency panels
+        JPanel fiatPanel = new JPanel();
+        fiatPanel.setLayout(new GridLayout(2, 2, 10, 10));
+        fiatPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        fromFiatDropdown = new JComboBox<>();
+        toFiatDropdown = new JComboBox<>();
+        
+        fiatPanel.add(new JLabel("From (Fiat):"));
+        fiatPanel.add(fromFiatDropdown);
+        fiatPanel.add(new JLabel("To (Fiat):"));
+        fiatPanel.add(toFiatDropdown);
+        
+        // Crypto currency panels
+        JPanel cryptoPanel = new JPanel();
+        cryptoPanel.setLayout(new GridLayout(2, 2, 10, 10));
+        cryptoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        fromCryptoDropdown = new JComboBox<>();
+        toCryptoDropdown = new JComboBox<>();
+        
+        cryptoPanel.add(new JLabel("From (Crypto):"));
+        cryptoPanel.add(fromCryptoDropdown);
+        cryptoPanel.add(new JLabel("To (Crypto):"));
+        cryptoPanel.add(toCryptoDropdown);
+        
+        mainPanel.add(fiatPanel);
+        mainPanel.add(cryptoPanel);
+        mainPanel.add(Box.createVerticalStrut(10));
+    }
+
+    private static void addAmountPanel() {
+        JPanel amountPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        amountField = new JTextField(15);
+        amountPanel.add(new JLabel("Amount:"));
+        amountPanel.add(amountField);
+        mainPanel.add(amountPanel);
+        mainPanel.add(Box.createVerticalStrut(10));
+    }
+
+    private static void addConvertButton() {
+        convertButton = new JButton("Convert");
+        convertButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        convertButton.addActionListener(e -> performConversion());
+        mainPanel.add(convertButton);
+        mainPanel.add(Box.createVerticalStrut(10));
+    }
+
+    private static void addResultLabel() {
+        resultLabel = new JLabel("");
+        resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(resultLabel);
+    }
+
+    private static void toggleCurrencyPanels(boolean showFiat) {
+        Component[] components = mainPanel.getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                Component[] panelComps = panel.getComponents();
+                for (Component c : panelComps) {
+                    if (c instanceof JComboBox) {
+                        if (c == fromFiatDropdown || c == toFiatDropdown) {
+                            c.setVisible(showFiat);
+                        } else if (c == fromCryptoDropdown || c == toCryptoDropdown) {
+                            c.setVisible(!showFiat);
+                        }
+                    }
+                    if (c instanceof JLabel) {
+                        String text = ((JLabel) c).getText();
+                        if (text.contains("Fiat")) {
+                            c.setVisible(showFiat);
+                        } else if (text.contains("Crypto")) {
+                            c.setVisible(!showFiat);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void populateFiatCurrencyDropdowns() {
         try {
-            // URL to fetch available currencies
             String url = "https://api.frankfurter.app/currencies";
-            Request request = new Request.Builder()
-                    .url(url)
-                    .get()
-                    .build();
+            Request request = new Request.Builder().url(url).get().build();
             Response response = client.newCall(request).execute();
 
             if (response.isSuccessful()) {
-                String responseBody = response.body().string();
-                JSONObject jsonObject = new JSONObject(responseBody);
-
-                // Store currency codes in a List
-                ArrayList<String> currencyCodes = new ArrayList<>();
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                ArrayList<String> currencies = new ArrayList<>();
                 Iterator<String> keys = jsonObject.keys();
                 while (keys.hasNext()) {
-                    String currencyCode = keys.next();
-                    currencyCodes.add(currencyCode);
+                    currencies.add(keys.next());
                 }
+                Collections.sort(currencies);
 
-                // Sort the currency codes alphabetically
-                Collections.sort(currencyCodes);
-
-                // Populate the dropdowns with sorted currency codes
-                for (String code : currencyCodes) {
-                    fromCurrencyDropdown.addItem(code);
-                    toCurrencyDropdown.addItem(code);
+                for (String currency : currencies) {
+                    fromFiatDropdown.addItem(currency);
+                    toFiatDropdown.addItem(currency);
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Error fetching currencies: " + response.message());
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
+            showError("Error loading fiat currencies: " + e.getMessage());
         }
     }
 
-    // Method to handle currency conversion
-    private static BigDecimal convertCurrency(String fromCurrency, String toCurrency, BigDecimal amount) throws IOException {
-        // URL to fetch the conversion rate
-        String url = "https://api.frankfurter.app/latest?base=" + fromCurrency + "&symbols=" + toCurrency;
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
-        Response response = client.newCall(request).execute();
-
-        if (response.isSuccessful()) {
-            String responseBody = response.body().string();
-            JSONObject jsonObject = new JSONObject(responseBody);
-
-            // Get the conversion rate and calculate the converted amount
-            BigDecimal rate = jsonObject.getJSONObject("rates").getBigDecimal(toCurrency);
-            return rate.multiply(amount).setScale(4, RoundingMode.HALF_UP);
-        } else {
-            throw new IOException("Error: " + response.message());
+    private static void populateCryptoDropdowns() {
+        for (String crypto : CRYPTO_CURRENCIES) {
+            fromCryptoDropdown.addItem(crypto);
+            toCryptoDropdown.addItem(crypto);
         }
+    }
+
+    private static void performConversion() {
+        try {
+            String fromCurrency = fiatRadioButton.isSelected() ? 
+                (String) fromFiatDropdown.getSelectedItem() :
+                (String) fromCryptoDropdown.getSelectedItem();
+            
+            String toCurrency = fiatRadioButton.isSelected() ? 
+                (String) toFiatDropdown.getSelectedItem() :
+                (String) toCryptoDropdown.getSelectedItem();
+
+            if (fromCurrency.equals(toCurrency)) {
+                showError("Cannot convert a currency to itself");
+                return;
+            }
+
+            String amountText = amountField.getText().trim();
+            if (amountText.isEmpty()) {
+                showError("Please enter an amount");
+                return;
+            }
+
+            BigDecimal amount = new BigDecimal(amountText);
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                showError("Amount must be greater than zero");
+                return;
+            }
+
+            CurrencyService service = new CurrencyService();
+            BigDecimal result = service.convertCurrency(fromCurrency, toCurrency, amount);
+
+            if (result != null) {
+                showResult(String.format("%s %s = %s %s", 
+                    amount.stripTrailingZeros().toPlainString(),
+                    fromCurrency,
+                    result.stripTrailingZeros().toPlainString(),
+                    toCurrency));
+            } else {
+                showError("Unable to retrieve conversion rate");
+            }
+
+        } catch (NumberFormatException e) {
+            showError("Invalid amount format");
+        } catch (Exception e) {
+            showError("Error: " + e.getMessage());
+        }
+    }
+
+    private static void showError(String message) {
+        resultLabel.setText("<html><font color='red'>" + message + "</font></html>");
+    }
+
+    private static void showResult(String message) {
+        resultLabel.setText("<html><b>" + message + "</b></html>");
     }
 }
