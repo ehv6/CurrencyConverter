@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -58,11 +61,30 @@ public class CurrencyConverterUI {
 
     private static void createAndShowGUI() {
         // Create main frame
-        frame = new JFrame("Currency Converter");
+        frame = new JFrame("Currency Converter") {
+            @Override
+            public void paint(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0, 0, new Color(230, 240, 255), getWidth(), getHeight(), new Color(255, 255, 255));
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                super.paint(g);
+            }
+        };
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         // Create main panel with margin
-        mainPanel = new JPanel();
+        mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(0, 0, new Color(230, 240, 255), getWidth(), getHeight(), new Color(255, 255, 255));
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
@@ -73,14 +95,14 @@ public class CurrencyConverterUI {
         addAmountPanel();
         addConvertButton();
         addResultLabel();
-
+    
         // Initialize dropdowns
         populateFiatCurrencyDropdowns();
         populateCryptoDropdowns();
-
+    
         // Set initial state
         toggleCurrencyPanels(true);
-
+    
         // Finalize frame setup
         frame.add(mainPanel);
         frame.setSize(400, 600);
@@ -198,6 +220,20 @@ public class CurrencyConverterUI {
         convertButton.setBorder(new EmptyBorder(10, 25, 10, 25));
         convertButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         convertButton.addActionListener(e -> performConversion());
+        
+        // Add hover effect
+        convertButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                convertButton.setBackground(new Color(0, 150, 255));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                convertButton.setBackground(new Color(0, 120, 215));
+            }
+        });
+        
         mainPanel.add(convertButton);
         mainPanel.add(Box.createVerticalStrut(10));
     }
