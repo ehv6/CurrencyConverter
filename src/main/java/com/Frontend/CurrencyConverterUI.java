@@ -1,5 +1,4 @@
-package com;
-
+package com.Frontend;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -33,6 +32,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import org.json.JSONObject;
+
+import com.Backend.CurrencyService;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
