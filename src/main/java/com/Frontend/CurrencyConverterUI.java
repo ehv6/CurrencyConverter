@@ -34,6 +34,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.json.JSONObject;
 
 import com.Backend.CurrencyService;
+import com.Backend.HistoryService;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -340,6 +341,9 @@ public class CurrencyConverterUI {
                     fromCurrency,
                     result.stripTrailingZeros().toPlainString(),
                     toCurrency));
+                    
+                    // Saving to database
+                    HistoryService.saveConversion(fromCurrency, toCurrency, amount, result);
             } else {
                 showError("Unable to retrieve conversion rate");
             }
